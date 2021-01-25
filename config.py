@@ -12,6 +12,9 @@ class Config(object):
     S3_SECRET = os.environ.get("S3_SECRET_ACCESS_KEY")
     S3_LOCATION = 'http://{}.s3.amazonaws.com/'.format(S3_BUCKET)
 
+    G_CLIENT_ID = os.environ.get("G_CLIENT_ID")
+    G_CLIENT_SECRET = os.environ.get("G_CLIENT_SECRET")
+
 class ProductionConfig(Config):
     DEBUG = False
     ASSETS_DEBUG = False

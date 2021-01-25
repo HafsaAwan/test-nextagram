@@ -11,6 +11,69 @@ class User(UserMixin,BaseModel):
     password_hash = pw.TextField(null=False)
     password = None
     image_path=pw.TextField(null=True)
+    is_private = pw.BooleanField(default=False)
+
+    def follow_status(self,idol):
+        from models.fanidol import FanIdol
+        return FanIdol.get_or_none(FanIdol.fan == self.id, FanIdol.idol == idol.id)
+
+    def follow(self, idol):
+        from models.fanidol import FanIdol
+        if self.follow_status(idol)==None:
+            relationship = FanIdol(idol=idol,fan=self.id)
+            if not idol.is_private:
+                relationship.is_approved = True
+            return relationship.save()
+        else:
+            return 0
+        
+    def unfollow(self, idol):
+        from models.fanidol import FanIdol
+        return FanIdol.delete().where(FanIdol.fan==self.id,FanIdol.idol==idol).execute()
+
+
+    @hybrid_property
+    def idols(self):
+        from models.fanidol import FanIdol
+        # get a list of idols user
+        idols = FanIdol.select(FanIdol.idol).where(FanIdol.fan==self.id, FanIdol.is_approved==True)   
+        return User.select().where( User.id.in_(idols) )
+        # user_idol = []
+        # for row in idols:
+        #     user_idol.append(row.idol)
+        # return user_idol
+
+
+    @hybrid_property
+    def fans(self):
+        from models.fanidol import FanIdol
+        # get a list of fans user
+        fans = FanIdol.select(FanIdol.fan).where(FanIdol.idol==self.id, FanIdol.is_approved==True)   
+        return User.select().where( User.id.in_(fans) )
+
+    @hybrid_property
+    def idol_requests(self):
+        from models.fanidol import FanIdol
+        idols = FanIdol.select(FanIdol.idol).where(FanIdol.fan==self.id, FanIdol.is_approved==False)   
+        return User.select().where( User.id.in_(idols) )
+
+
+    @hybrid_property
+    def fan_requests(self):
+        from models.fanidol import FanIdol
+        fans = FanIdol.select(FanIdol.fan).where(FanIdol.idol==self.id, FanIdol.is_approved==False)   
+        return User.select().where( User.id.in_(fans) )
+
+    def approve_request(self, fan):
+        from models.fanidol import FanIdol
+        # get the relationship
+        relationship = fan.follow_status(self)
+        # update the is_approved to true
+        relationship.is_approved = True
+        return relationship.save()
+        
+
+
 
     @hybrid_property
     def full_image_path(self):

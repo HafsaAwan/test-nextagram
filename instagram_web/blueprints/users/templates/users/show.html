@@ -1,26 +1,56 @@
 {%extends '_layout.html' %}
 
 {% block content %}
-
-  <div class="d-flex justify-content-center">
-    <div class="col-3 text-center">
-      
-      <img src="{{user.full_image_path}}" class="img-thumbnail rounded-circle" width="200"/>
-
-      <h4>@{{user.username}}</h4>
-      {% if current_user.id == user.id %}
-        <a class=" btn btn-primary" href="{{url_for('users.edit',id=current_user.id)}}">Edit Profile</a>
-        <br></br>
-        <a class=" btn btn-primary" href="{{url_for('images.new')}}">Upload Image</a>
+<div class="d-flex justify-content-center">
+  <div class="col-3 text-center">
+    <img src="{{user.full_image_path}}" class="img-thumbnail rounded-circle" width="200"/>
+    <h6>@{{user.username}}</h6>
+    {# only show if current user is owner of profile #}
+    {% if current_user.id == user.id %}
+      <a class="btn btn-sm btn-outline-secondary" href="{{url_for('users.edit',id=user.id)}}">Edit Profile</a>
+    {% else %}
+      {% if current_user.follow_status(user) %}
+        <form action="{{url_for('users.unfollow',idol_id=user.id)}}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="submit" class="btn btn-sm btn-outline-primary" value="Unfollow">
+        </form>
+      {% else %}
+        <form action="{{url_for('users.follow',idol_id=user.id)}}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="submit" class="btn btn-sm btn-outline-primary" value="Follow">
+        </form>
       {% endif %}
+    {% endif %}
 
-    </div>
-    
+    <ul>
+      <h6>{{user.username}}'s Idols</h6>
+      {% for idol in user.idols %}
+        <li>{{idol.username}}</li>
+      {% endfor %}
+    </ul>
+    <ul>
+      <h6>{{user.username}}'s Fans</h6>
+      {% for fan in user.fans %}
+        <li>{{fan.username}}</li>
+      {% endfor %}
+    </ul>
   </div>
-  <div class="container">
+</div>
+<div class="container row">
+  {% if current_user.id == user.id or not user.is_private %}
     {% for image in user.images %}
-    <img src="{{image.full_image_path}}" width="350"/>
+    <div class="card" style="width: 400px;">
+      <img src="{{image.full_image_url}}" width="100%"/>
+      {# only show if current user is not owner of profile #}
+      {% if not current_user.id == user.id %}
+      <div>
+        <a href="{{url_for('donations.new',image_id=image.id)}}" class="btn btn-primary">Donate</a>
+      </div>
+      {% endif %}
+    </div>
     {% endfor %}
-  </div>
- 
+  {% else %}
+    <span class="mx-auto">This profile is private. Follow @{{user.username}} to continue.</span>
+  {% endif %}
+</div>
 {% endblock %}
