@@ -4,13 +4,15 @@ from flask import Flask
 from models.base_model import db
 from flask_wtf import CSRFProtect
 from flask_login import LoginManager
+from flask_jwt_extended import JWTManager
 from models.user import User
 
 web_dir = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'instagram_web')
 
 app = Flask('NEXTAGRAM', root_path=web_dir)
-CSRFProtect(app)
+csrf = CSRFProtect(app)
+jwt = JWTManager(app)
 
 if os.getenv('FLASK_ENV') == 'production':
     app.config.from_object("config.ProductionConfig")
